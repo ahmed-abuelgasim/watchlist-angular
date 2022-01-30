@@ -3,6 +3,10 @@
   "version": "0.0.0",
   "scripts": {
     "build": "ng build",
+    "deploy": "ng deploy --base-href=/watchlist-angular/",
+    "lint": "npm run lint-sass && npm run lint-ts",
+    "lint-sass": "npx stylelint \"**/*.scss\"",
+    "lint-ts": "eslint \"**/*.ts\"",
     "ng": "ng",
     "start": "ng serve",
     "test": "ng test",
