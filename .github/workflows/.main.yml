@@ -75,4 +75,4 @@ jobs:
       - name: Test
         run: npm run test-ci
       - name: Deploy
-        run: npm run deploy -- --no-silent
+        run: npm run deploy
