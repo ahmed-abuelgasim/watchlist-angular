@@ -74,5 +74,5 @@ jobs:
           key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
       - name: Test
         run: npm run test-ci
-      - name: Deploy
+      - name: Deployy
         run: npm run deploy
