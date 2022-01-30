@@ -40,6 +40,7 @@ jobs:
         with:
           path: node_modules
           key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+          restore-keys: ${{ runner.os }}-node-modules-
       - name: Lint
         run: npm run lint
 
@@ -73,3 +74,5 @@ jobs:
           key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
       - name: Test
         run: npm run test-ci
+      - name: Deploy
+        run: npm run deploy
