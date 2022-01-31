@@ -6,7 +6,8 @@
   "version": "0.0.0",
   "scripts": {
     "build": "ng build",
-    "deploy": "ng deploy --base-href=/watchlist-angular/ --name=\"Ahmed Abuelgasim\" --email=\"aoabuelgasim@gmail.com\" --no-silent",
+    "deploy": "ng deploy --base-href=/watchlist-angular/",
+    "deploy-ci": "npm run deploy -- --name=\"Ahmed Abuelgasim\" --email=\"aoabuelgasim@gmail.com\" --no-silent",
     "lint": "npm run lint-sass && npm run lint-ts",
     "lint-sass": "npx stylelint \"**/*.scss\"",
     "lint-ts": "eslint \"**/*.ts\"",
