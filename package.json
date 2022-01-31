@@ -1,5 +1,8 @@
 {
   "name": "watchlist-angular",
+  "author": "Ahmed Abuelgasim",
+  "homepage": "https://ahmed-abuelgasim.github.io/watchlist-angular/",
+  "license": "ISC",
   "version": "0.0.0",
   "scripts": {
     "build": "ng build",
