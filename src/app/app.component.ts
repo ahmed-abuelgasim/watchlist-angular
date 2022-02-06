@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { StreamingServicesService } from './services/streaming-services.service';
 
 @Component({
   selector: 'app-root',
@@ -6,5 +7,11 @@ import { Component } from '@angular/core';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  title = 'watchlist-angular';
+  userStreamingServices$ = this.streamingServicesService.userStreamingServices$;
+
+  constructor(public streamingServicesService: StreamingServicesService) {}
+
+  addService() {
+    this.streamingServicesService.updateUserStreamingServices(['netflix']);
+  }
 }
