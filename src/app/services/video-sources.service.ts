@@ -57,6 +57,9 @@ export class VideoSourcesService {
   private _sourcesBehaviourSubject = new BehaviorSubject<VideoSource[]>([]);
   readonly sources$ = this._sourcesBehaviourSubject.asObservable();
 
+  private _activeSourcesBehaviourSubject = new BehaviorSubject<VideoSource[]>([]);
+  readonly activeSources$ = this._activeSourcesBehaviourSubject.asObservable();
+
 
   constructor() {}
 
@@ -64,23 +67,12 @@ export class VideoSourcesService {
   async addCustomSource(videoSource: NewVideoSource): Promise<number | string> {
     try {
       const id = await db.videoSources.add({...videoSource, active: true});
-      const updatedSources = await db.videoSources.orderBy('name').toArray();
-      this._sourcesBehaviourSubject.next(updatedSources);
+      await this.emitNewValuesToObservables();
       return id;
     } catch (error) {
       return error instanceof Error && error.name === 'ConstraintError' ?
         AddFailureEnum.SourceExists :
         AddFailureEnum.Failed;
-    }
-  }
-
-
-  async removeCustomSource(id: number): Promise<number> {
-    try {
-      await db.videoSources.delete(id);
-      return RemoveEnum.Succeeded;
-    } catch (error) {
-      return RemoveEnum.Failed;
     }
   }
 
@@ -91,11 +83,32 @@ export class VideoSourcesService {
         db.videoSources.update(id, {active: true}) :
         db.videoSources.update(id, {active: false})
       );
+      await this.emitNewValuesToObservables();
       return updated ?
         (newActiveState ? ActiveEnum.Activated : ActiveEnum.Deactivated) :
         ActiveEnum.Failed;
     } catch (error) {
       return ActiveEnum.OtherError;
+    }
+  }
+
+
+  async emitNewValuesToObservables() {
+    const updatedSources = await db.videoSources.orderBy('name').toArray();
+    this._sourcesBehaviourSubject.next(updatedSources);
+
+    const updatedActiveSources = updatedSources.filter(source => source.active == true);
+    this._activeSourcesBehaviourSubject.next(updatedActiveSources);
+  }
+
+
+  async removeCustomSource(id: number): Promise<number> {
+    try {
+      await db.videoSources.delete(id);
+      await this.emitNewValuesToObservables();
+      return RemoveEnum.Succeeded;
+    } catch (error) {
+      return RemoveEnum.Failed;
     }
   }
 }
