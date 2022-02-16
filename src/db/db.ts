@@ -1,32 +1,36 @@
 import Dexie, { Table } from 'dexie';
+import { VideoSource } from '../app/services/video-sources.service';
 
-export interface UserStreamingServiceId {
-  id?: number,
-  streamingServiceId: string,
-}
+const initialVideoSources: VideoSource[] = [
+  {
+    active: false,
+    name: 'Disney plus',
+  },
+  {
+    active: false,
+    name: 'Apple TV+',
+  },
+  {
+    active: false,
+    name: 'Netflix',
+  },
+  {
+    active: false,
+    name: 'Amazon prime',
+  },
+];
 
 export class AppDB extends Dexie {
-  userStreamingServiceIds!: Table<UserStreamingServiceId, number>;
+  videoSources!: Table<VideoSource, number>;
 
   constructor() {
     super('watchlist');
 
     this.version(1).stores({
-      userStreamingServiceIds: '++, &streamingServiceId',
+      videoSources: '++id, &name',
     });
-    this.on('populate', () => this.populate()); //
-  }
 
-  // Run when database is created on client
-  async populate() {
-    await db.userStreamingServiceIds.bulkAdd([
-      {
-        streamingServiceId: 'disney-plus',
-      },
-      {
-        streamingServiceId: 'apple-tv',
-      },
-    ]);
+    this.on('populate', () => db.videoSources.bulkAdd(initialVideoSources));
   }
 }
 

@@ -3,7 +3,7 @@ import { BrowserModule } from '@angular/platform-browser';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { StreamingServicesService } from './services/streaming-services.service';
+import { VideoSourcesService } from './services/video-sources.service';
 
 @NgModule({
   declarations: [
@@ -13,7 +13,7 @@ import { StreamingServicesService } from './services/streaming-services.service'
     BrowserModule,
     AppRoutingModule
   ],
-  providers: [StreamingServicesService],
+  providers: [VideoSourcesService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
