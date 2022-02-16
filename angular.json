@@ -94,6 +94,12 @@
               "codeCoverage": true,
               "browsers": "ChromeHeadless",
               "watch": false
+            },
+            "dev": {
+              "sourceMap": false,
+              "codeCoverage": false,
+              "browsers": "Chrome",
+              "watch": true
             }
           },
           "options": {
