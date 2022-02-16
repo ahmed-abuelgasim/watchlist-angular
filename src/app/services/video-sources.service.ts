@@ -61,7 +61,9 @@ export class VideoSourcesService {
   readonly activeSources$ = this._activeSourcesBehaviourSubject.asObservable();
 
 
-  constructor() {}
+  constructor() {
+    this.init();
+  }
 
 
   async addCustomSource(videoSource: NewVideoSource): Promise<number | string> {
@@ -99,6 +101,10 @@ export class VideoSourcesService {
 
     const updatedActiveSources = updatedSources.filter(source => source.active == true);
     this._activeSourcesBehaviourSubject.next(updatedActiveSources);
+  }
+
+  async init() {
+    await this.emitNewValuesToObservables();
   }
 
 
