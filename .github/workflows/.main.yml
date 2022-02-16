@@ -2,9 +2,9 @@ name: Main CI
 
 on:
   push:
-    branches: [ master, main ]
+    branches: [ main ]
   pull_request:
-    branches: [ master, main ]
+    branches: [ main ]
 
 jobs:
   deps:
@@ -30,6 +30,7 @@ jobs:
 
   lint:
     name: Lint
+    needs: [deps]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
