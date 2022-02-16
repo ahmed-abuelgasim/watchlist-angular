@@ -1,24 +1,5 @@
 import Dexie, { Table } from 'dexie';
-import { VideoSource } from '../app/services/video-sources.service';
-
-const initialVideoSources: VideoSource[] = [
-  {
-    active: false,
-    name: 'Disney plus',
-  },
-  {
-    active: false,
-    name: 'Apple TV+',
-  },
-  {
-    active: false,
-    name: 'Netflix',
-  },
-  {
-    active: false,
-    name: 'Amazon prime',
-  },
-];
+import { VideoSource, initialVideoSources } from '../app/services/video-sources.service';
 
 export class AppDB extends Dexie {
   videoSources!: Table<VideoSource, number>;

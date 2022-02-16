@@ -3,11 +3,14 @@ import { BehaviorSubject } from 'rxjs';
 
 import { db } from '../../db/db';
 
-export interface VideoSource {
-  id?: number,
-  active: boolean,
+export interface NewVideoSource {
   image?: string,
   name: string,
+};
+
+export interface VideoSource extends NewVideoSource {
+  id?: number,
+  active: boolean,
 };
 
 export enum AddFailureEnum {
@@ -27,6 +30,25 @@ export enum ActiveEnum {
   OtherError,
 }
 
+export const initialVideoSources: VideoSource[] = [
+  {
+    active: false,
+    name: 'Disney plus',
+  },
+  {
+    active: false,
+    name: 'Apple TV+',
+  },
+  {
+    active: false,
+    name: 'Netflix',
+  },
+  {
+    active: false,
+    name: 'Amazon prime',
+  },
+];
+
 
 @Injectable({
   providedIn: 'root'
@@ -35,11 +57,13 @@ export class VideoSourcesService {
   private _sourcesBehaviourSubject = new BehaviorSubject<VideoSource[]>([]);
   readonly sources$ = this._sourcesBehaviourSubject.asObservable();
 
+
   constructor() {}
 
-  async addCustomSource(videoSource: VideoSource): Promise<number | string> {
+
+  async addCustomSource(videoSource: NewVideoSource): Promise<number | string> {
     try {
-      const id = await db.videoSources.add(videoSource);
+      const id = await db.videoSources.add({...videoSource, active: true});
       const updatedSources = await db.videoSources.orderBy('name').toArray();
       this._sourcesBehaviourSubject.next(updatedSources);
       return id;
@@ -50,6 +74,7 @@ export class VideoSourcesService {
     }
   }
 
+
   async removeCustomSource(id: number): Promise<number> {
     try {
       await db.videoSources.delete(id);
@@ -59,13 +84,13 @@ export class VideoSourcesService {
     }
   }
 
+
   async changeSourceActiveState(id: number, newActiveState: boolean): Promise<number> {
     try {
       const updated = await (newActiveState ?
         db.videoSources.update(id, {active: true}) :
         db.videoSources.update(id, {active: false})
       );
-
       return updated ?
         (newActiveState ? ActiveEnum.Activated : ActiveEnum.Deactivated) :
         ActiveEnum.Failed;
