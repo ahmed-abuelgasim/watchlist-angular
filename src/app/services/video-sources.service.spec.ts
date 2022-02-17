@@ -48,11 +48,21 @@ describe('VideoSourcesService', () => {
     const mockSource2Id = await service.addCustomSource(newMockSource2) as number;
     const mockSource1Id = await service.addCustomSource(newMockSource1) as number;
 
-    let obsReturnedSources: VideoSource[] | undefined;
+    let sourcesFromObs: VideoSource[] | undefined;
     service.sources$.subscribe((sources) => {
-      obsReturnedSources = sources;
+      sourcesFromObs = sources;
     });
-    expect(obsReturnedSources).toEqual([{...mockSource1, id: mockSource1Id}, {...mockSource2, id: mockSource2Id}]);
+    expect(sourcesFromObs).toEqual([{...mockSource1, id: mockSource1Id}, {...mockSource2, id: mockSource2Id}]);
+  });
+
+  it('should emit updated sources on observable when sources removed', async () => {
+    const randomMockSourceId = await service.addCustomSource(randomNewMockSource) as number;
+    await service.removeCustomSource(randomMockSourceId);
+    let sourcesFromObs: VideoSource[] | undefined;
+    service.sources$.subscribe((sources) => {
+      sourcesFromObs = sources;
+    });
+    expect(sourcesFromObs).toEqual([]);
   });
 
 
@@ -62,9 +72,25 @@ describe('VideoSourcesService', () => {
     expect(response).toEqual(ActiveEnum.Deactivated);
     response = await service.changeSourceActiveState(id, false);
     expect(response).toEqual(ActiveEnum.Deactivated);
+
+    // Test all sources observable
+    let sourcesFromObs: VideoSource[] | undefined;
+    service.sources$.subscribe(sources => sourcesFromObs = sources);
+    expect(sourcesFromObs).toEqual([{...randomMockSource, active: false}]);
+
+    // Test active sources observable
+    let activeSourcesFromObs: VideoSource[] | undefined;
+    service.activeSources$.subscribe(activeSources => activeSourcesFromObs = activeSources);
+    expect(activeSourcesFromObs).toEqual([]);
+
     response = await service.changeSourceActiveState(id, true);
     expect(response).toEqual(ActiveEnum.Activated);
     response = await service.changeSourceActiveState(id, true);
     expect(response).toEqual(ActiveEnum.Activated);
+
+    // Test active sources observable
+    let activeSourcesFromObs2ndSubscription: VideoSource[] | undefined;
+    service.activeSources$.subscribe(activeSources => activeSourcesFromObs2ndSubscription = activeSources);
+    expect(activeSourcesFromObs2ndSubscription).toEqual([randomMockSource]);
   });
 });
