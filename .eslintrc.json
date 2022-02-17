@@ -19,6 +19,7 @@
         "plugin:@angular-eslint/template/process-inline-templates"
       ],
       "rules": {
+        "@angular-eslint/no-empty-lifecycle-method": 1,
         "@angular-eslint/directive-selector": [
           "error",
           {
