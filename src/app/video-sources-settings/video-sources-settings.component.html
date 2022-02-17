@@ -1,0 +1,17 @@
+<p>video-sources-settings works!</p>
+
+
+<h2>Video sources</h2>
+<ul>
+  <li *ngFor="let source of (videoSourcesService.sources$ | async)">
+    <label>
+      <input
+        aria-label="Change active state of video source"
+        type="checkbox"
+        [id]="source.id"
+        [checked]="source.active"
+        (change)="checkboxChanged($event)"/>
+      {{source.name}} - {{source.active}}
+    </label>
+  </li>
+</ul>

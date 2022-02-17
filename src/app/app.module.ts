@@ -9,6 +9,7 @@ import { VideoSourcesService } from './services/video-sources.service';
 import { ListViewComponent } from './list-view/list-view.component';
 import { ListsViewComponent } from './lists-view/lists-view.component';
 import { SettingsViewComponent } from './settings-view/settings-view.component';
+import { VideoSourcesSettingsComponent } from './video-sources-settings/video-sources-settings.component';
 
 @NgModule({
   declarations: [
@@ -16,6 +17,7 @@ import { SettingsViewComponent } from './settings-view/settings-view.component';
     ListsViewComponent,
     SettingsViewComponent,
     ListViewComponent,
+    VideoSourcesSettingsComponent,
   ],
   imports: [
     BrowserModule,
