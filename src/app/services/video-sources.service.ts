@@ -48,13 +48,13 @@ export class VideoSourcesService {
 
 
   constructor() {
-    this.init();
+    this._init();
   }
 
 
   async addCustomSource(videoSource: NewVideoSource): Promise<number> {
     const id = await db.videoSources.add({...videoSource, active: true});
-    await this.emitNewValuesToObservables();
+    await this._emitNewValuesToObservables();
     return id;
   }
 
@@ -64,13 +64,12 @@ export class VideoSourcesService {
       db.videoSources.update(id, {active: true}) :
       db.videoSources.update(id, {active: false})
     );
-    await this.emitNewValuesToObservables();
-    // const updateSuccessful = (updated == 1)
+    await this._emitNewValuesToObservables();
     return updated;
   }
 
 
-  async emitNewValuesToObservables() {
+  private async _emitNewValuesToObservables() {
     const updatedSources = await db.videoSources.orderBy('name').toArray();
     this._sourcesBehaviourSubject.next(updatedSources);
 
@@ -79,13 +78,13 @@ export class VideoSourcesService {
   }
 
 
-  async init() {
-    await this.emitNewValuesToObservables();
+  private async _init() {
+    await this._emitNewValuesToObservables();
   }
 
 
   async removeCustomSource(id: number): Promise<void> {
     await db.videoSources.delete(id);
-    await this.emitNewValuesToObservables();
+    await this._emitNewValuesToObservables();
   }
 }
