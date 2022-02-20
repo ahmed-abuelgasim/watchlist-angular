@@ -13,22 +13,6 @@ export interface VideoSource extends NewVideoSource {
   active: boolean,
 };
 
-export enum AddFailureEnum {
-  Failed = 'FAILED',
-  SourceExists = 'EXISTS',
-}
-
-export enum RemoveEnum {
-  Succeeded,
-  Failed,
-}
-
-export enum ActiveEnum {
-  Activated,
-  Deactivated,
-  Failed,
-  OtherError,
-}
 
 export const initialVideoSources: VideoSource[] = [
   {
@@ -54,6 +38,8 @@ export const initialVideoSources: VideoSource[] = [
   providedIn: 'root'
 })
 export class VideoSourcesService {
+  static sourceExistsErrorType = 'ConstraintError';
+
   private _sourcesBehaviourSubject = new BehaviorSubject<VideoSource[]>([]);
   readonly sources$ = this._sourcesBehaviourSubject.asObservable();
 
@@ -66,32 +52,21 @@ export class VideoSourcesService {
   }
 
 
-  async addCustomSource(videoSource: NewVideoSource): Promise<number | string> {
-    try {
-      const id = await db.videoSources.add({...videoSource, active: true});
-      await this.emitNewValuesToObservables();
-      return id;
-    } catch (error) {
-      return error instanceof Error && error.name === 'ConstraintError' ?
-        AddFailureEnum.SourceExists :
-        AddFailureEnum.Failed;
-    }
+  async addCustomSource(videoSource: NewVideoSource): Promise<number> {
+    const id = await db.videoSources.add({...videoSource, active: true});
+    await this.emitNewValuesToObservables();
+    return id;
   }
 
 
   async changeSourceActiveState(id: number, newActiveState: boolean): Promise<number> {
-    try {
-      const updated = await (newActiveState ?
-        db.videoSources.update(id, {active: true}) :
-        db.videoSources.update(id, {active: false})
-      );
-      await this.emitNewValuesToObservables();
-      return updated ?
-        (newActiveState ? ActiveEnum.Activated : ActiveEnum.Deactivated) :
-        ActiveEnum.Failed;
-    } catch (error) {
-      return ActiveEnum.OtherError;
-    }
+    const updated = await (newActiveState ?
+      db.videoSources.update(id, {active: true}) :
+      db.videoSources.update(id, {active: false})
+    );
+    await this.emitNewValuesToObservables();
+    // const updateSuccessful = (updated == 1)
+    return updated;
   }
 
 
@@ -103,18 +78,14 @@ export class VideoSourcesService {
     this._activeSourcesBehaviourSubject.next(updatedActiveSources);
   }
 
+
   async init() {
     await this.emitNewValuesToObservables();
   }
 
 
-  async removeCustomSource(id: number): Promise<number> {
-    try {
-      await db.videoSources.delete(id);
-      await this.emitNewValuesToObservables();
-      return RemoveEnum.Succeeded;
-    } catch (error) {
-      return RemoveEnum.Failed;
-    }
+  async removeCustomSource(id: number): Promise<void> {
+    await db.videoSources.delete(id);
+    await this.emitNewValuesToObservables();
   }
 }

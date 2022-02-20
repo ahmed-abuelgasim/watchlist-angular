@@ -1,5 +1,5 @@
 import { db } from '../../db/db';
-import { ActiveEnum, AddFailureEnum, RemoveEnum, VideoSource, NewVideoSource, VideoSourcesService } from './video-sources.service';
+import { VideoSource, NewVideoSource, VideoSourcesService } from './video-sources.service';
 
 describe('VideoSourcesService', () => {
   const newMockSource1: NewVideoSource = {name: 'Mock video source'};
@@ -30,17 +30,20 @@ describe('VideoSourcesService', () => {
 
   it('should remove sources from db', async () => {
     const id = await db.videoSources.add(randomMockSource);
-    let response = await service.removeCustomSource(id);
-    expect(response).toEqual(RemoveEnum.Succeeded);
+    await service.removeCustomSource(id);
     const mockSourcefromDb = await db.videoSources.get(id);
     expect(mockSourcefromDb).toBeUndefined();
   });
 
 
-  it('should catch error when adding existing video source and respond with correct enum value', async () => {
-    await service.addCustomSource(randomNewMockSource);
-    const response = await service.addCustomSource(randomNewMockSource);
-    expect(response).toEqual(AddFailureEnum.SourceExists);
+  it('should catch errors when adding existing video source and respond with correct enum value', async () => {
+    try {
+      await service.addCustomSource(randomNewMockSource);
+      await service.addCustomSource(randomNewMockSource);
+    } catch(err) {
+      console.log((err as Error).message);
+      expect((err as Error).name).toBe(VideoSourcesService.sourceExistsErrorType);
+    }
   });
 
 
@@ -68,29 +71,27 @@ describe('VideoSourcesService', () => {
 
   it('should change active state of sources correctly', async () => {
     const id = await db.videoSources.add(randomMockSource);
-    let response = await service.changeSourceActiveState(id, false);
-    expect(response).toEqual(ActiveEnum.Deactivated);
-    response = await service.changeSourceActiveState(id, false);
-    expect(response).toEqual(ActiveEnum.Deactivated);
+    const idAsNumber = id as number;
 
-    // Test all sources observable
+    // Test that updating to existing value doesn't cause error
+    await service.changeSourceActiveState(id, true);
+
+    await service.changeSourceActiveState(id, false);
+    let mockSourcefromDb = await db.videoSources.get(idAsNumber);
+    expect(mockSourcefromDb?.active).toBeFalse();
+
+    // Test all sources observable updates
     let sourcesFromObs: VideoSource[] | undefined;
     service.sources$.subscribe(sources => sourcesFromObs = sources);
     expect(sourcesFromObs).toEqual([{...randomMockSource, active: false}]);
 
-    // Test active sources observable
+    // Test active sources observable updates
     let activeSourcesFromObs: VideoSource[] | undefined;
     service.activeSources$.subscribe(activeSources => activeSourcesFromObs = activeSources);
     expect(activeSourcesFromObs).toEqual([]);
 
-    response = await service.changeSourceActiveState(id, true);
-    expect(response).toEqual(ActiveEnum.Activated);
-    response = await service.changeSourceActiveState(id, true);
-    expect(response).toEqual(ActiveEnum.Activated);
-
-    // Test active sources observable
-    let activeSourcesFromObs2ndSubscription: VideoSource[] | undefined;
-    service.activeSources$.subscribe(activeSources => activeSourcesFromObs2ndSubscription = activeSources);
-    expect(activeSourcesFromObs2ndSubscription).toEqual([randomMockSource]);
+    await service.changeSourceActiveState(id, true);
+    mockSourcefromDb = await db.videoSources.get(idAsNumber);
+    expect(mockSourcefromDb?.active).toBeTrue();
   });
 });
