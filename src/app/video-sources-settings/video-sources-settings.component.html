@@ -3,13 +3,12 @@
     <li *ngFor="let source of (videoSourcesService.sources$ | async)">
       <label>
         <input
-          aria-label="Change active state of video source"
+          aria-label="Active state of video source"
           type="checkbox"
-          name="checkbox-{{source.id}}"
           [id]="source.id"
-          (change)="checkboxChanged($event)"
-          [checked]="source.active" />
-        {{source.name}} - {{source.active}}
+          [checked]="source.active"
+          (change)="checkboxChanged($event)"/>
+        {{source.name}}
       </label>
     </li>
   </ul>
