@@ -1,17 +1,24 @@
-<ul>
-  <li *ngFor="let source of (videoSourcesService.sources$ | async)">
-    <label>
-      <input
-        aria-label="Change active state of video source"
-        type="checkbox"
-        [id]="source.id"
-        [checked]="source.active"
-        (change)="checkboxChanged($event)"/>
-      {{source.name}} - {{source.active}}
-    </label>
-  </li>
-</ul>
+<form (submit)="updateActiveSources($event)">
+  <ul>
+    <li *ngFor="let source of (videoSourcesService.sources$ | async)">
+      <label>
+        <input
+          aria-label="Change active state of video source"
+          type="checkbox"
+          name="checkbox-{{source.id}}"
+          [id]="source.id"
+          (change)="checkboxChanged($event)"
+          [checked]="source.active" />
+        {{source.name}} - {{source.active}}
+      </label>
+    </li>
+  </ul>
+
+  <button [disabled]="!showSourcesSaveBtn" aria-label="Save active sources" type="submit">
+    Save
+  </button>
+</form>
 
 
-<button (click)="addSource()">Add</button>
-<button (click)="deleteSource()">Delete</button>
+<!-- <button (click)="addSource()">Add</button>
+<button (click)="deleteSource()">Delete</button> -->

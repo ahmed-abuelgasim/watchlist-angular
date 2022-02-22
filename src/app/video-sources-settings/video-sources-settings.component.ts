@@ -1,50 +1,79 @@
 import { Component, OnInit } from '@angular/core';
-import { VideoSourcesService } from '../services/video-sources.service';
+import { Subscription } from 'rxjs';
+import { VideoSource, NewVideoSource, VideoSourcesService } from '../services/video-sources.service';
 
-
-const ERROR_MSGS = {
-  EXISTING: 'Video source already exists',
-  ADD: 'There was an error adding the video source. Please try again.',
-  DELETE: 'There was an error deleteing the video source. Please try again.',
-};
 
 @Component({
   selector: 'app-video-sources-settings',
   templateUrl: './video-sources-settings.component.html',
   styleUrls: ['./video-sources-settings.component.scss'],
 })
-export class VideoSourcesSettingsComponent implements OnInit {
+export class VideoSourcesSettingsComponent {
+  static ERROR_MSGS = {
+    EXISTING: 'Video source already exists',
+    ADD: 'There was an error adding the video source. Please try again.',
+    DELETE: 'There was an error deleteing the video source. Please try again.',
+  };
+
+  submittingActiveSources = false;
+  newActiveStates: {[k: string]: boolean} = {};
+
+
   constructor(public videoSourcesService: VideoSourcesService) { }
 
-  ngOnInit(): void {
+
+  get showSourcesSaveBtn(): boolean {
+    return this.submittingActiveSources || Object.keys(this.newActiveStates).length > 0;
   }
+
 
   checkboxChanged(event: Event) {
     const checkBoxEl = event.target as HTMLInputElement;
-    const videoSourceId = parseInt(checkBoxEl.id, 10);
+    const videoSourceId = checkBoxEl.id;
     const newActiveState = checkBoxEl.checked;
-    this.videoSourcesService.changeSourceActiveState(videoSourceId, newActiveState);
-  }
-
-  id: number = 0;
-
-
-  async addSource() {
-    try {
-      this.id = await this.videoSourcesService.addCustomSource({name: 'Kodi'});
-    } catch (error) {
-      const toastMessage = (error as Error).name == VideoSourcesService.sourceExistsErrorType ?
-        ERROR_MSGS.EXISTING :
-        ERROR_MSGS.ADD;
-      alert(toastMessage);
+    if (videoSourceId in this.newActiveStates) {
+      delete this.newActiveStates[videoSourceId];
+    } else {
+      this.newActiveStates[videoSourceId] = newActiveState;
     }
   }
 
-  async deleteSource() {
-    try {
-      await this.videoSourcesService.removeCustomSource(this.id);
-    } catch (error) {
-      alert(ERROR_MSGS.DELETE);
+  async updateActiveSources(event: SubmitEvent) {
+    event.preventDefault();
+    this.submittingActiveSources = true;
+
+    const promises: Promise<void>[] = [];
+    for (const [id, newActiveState] of Object.entries(this.newActiveStates)) {
+      promises.push(
+        this.videoSourcesService.changeSourceActiveState(parseInt(id, 10), newActiveState)
+      );
     }
+    await Promise.all(promises);
+
+    this.newActiveStates = {};
+    this.submittingActiveSources = false;
   }
+
+
+
+  // id: number = 0;
+
+  // async addSource(source: NewVideoSource = {name: 'Kodi'}) {
+  //   try {
+  //     this.id = await this.videoSourcesService.addCustomSource(source);
+  //   } catch (error) {
+  //     const toastMessage = (error as Error).name == VideoSourcesService.sourceExistsErrorType ?
+  //       VideoSourcesSettingsComponent.ERROR_MSGS.EXISTING :
+  //       VideoSourcesSettingsComponent.ERROR_MSGS.ADD;
+  //     alert(toastMessage);
+  //   }
+  // }
+
+  // async deleteSource(id: number) {
+  //   try {
+  //     await this.videoSourcesService.removeCustomSource(id);
+  //   } catch (error) {
+  //     alert(VideoSourcesSettingsComponent.ERROR_MSGS.DELETE);
+  //   }
+  // }
 }
