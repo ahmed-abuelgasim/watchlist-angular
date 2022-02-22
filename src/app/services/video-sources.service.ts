@@ -59,13 +59,11 @@ export class VideoSourcesService {
   }
 
 
-  async changeSourceActiveState(id: number, newActiveState: boolean): Promise<number> {
-    const updated = await (newActiveState ?
-      db.videoSources.update(id, {active: true}) :
-      db.videoSources.update(id, {active: false})
-    );
-    await this._emitNewValuesToObservables();
-    return updated;
+  async changeSourceActiveState(id: number, newActiveState: boolean): Promise<void> {
+    const updated = await db.videoSources.update(id, {active: newActiveState});
+    if (updated) {
+      await this._emitNewValuesToObservables();
+    }
   }
 
 
