@@ -1,6 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { Subscription } from 'rxjs';
-import { VideoSource, NewVideoSource, VideoSourcesService } from '../services/video-sources.service';
+import { Component } from '@angular/core';
+import { VideoSourcesService } from '../services/video-sources.service';
 
 
 @Component({
@@ -10,13 +9,14 @@ import { VideoSource, NewVideoSource, VideoSourcesService } from '../services/vi
 })
 export class VideoSourcesSettingsComponent {
   static ERROR_MSGS = {
-    EXISTING: 'Video source already exists',
-    ADD: 'There was an error adding the video source. Please try again.',
-    DELETE: 'There was an error deleteing the video source. Please try again.',
+    // ADD: 'There was an error adding the video source. Please try again.',
+    // DELETE: 'There was an error deleteing the video source. Please try again.',
+    // EXISTING: 'Video source already exists',
+    UPDATE_FAILED: 'There was an error updating. Please try again.',
   };
 
-  submittingActiveSources = false;
   newActiveStates: {[k: string]: boolean} = {};
+  submittingActiveSources = false;
 
 
   constructor(public videoSourcesService: VideoSourcesService) { }
