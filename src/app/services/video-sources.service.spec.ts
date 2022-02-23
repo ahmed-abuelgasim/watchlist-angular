@@ -1,6 +1,7 @@
 import Dexie from 'dexie';
 import { dbName, db } from '../../db/db';
-import { initialVideoSources, VideoSource, NewVideoSource, VideoSourcesService } from './video-sources.service';
+import { initialVideoSources, NewVideoSource, VideoSource } from '../utils/video-source-utils';
+import { VideoSourcesService } from './video-sources.service';
 
 
 describe('VideoSourcesService', () => {
@@ -74,7 +75,7 @@ describe('VideoSourcesService', () => {
 
     const mockSource2Id = await service.addCustomSource(newMockSource2) as number;
     const mockSource1Id = await service.addCustomSource(newMockSource1) as number;
-    expect(sourcesFromObs!).toEqual([{...mockSource1, id: mockSource1Id}, {...mockSource2, id: mockSource2Id}]);
+    expect(sourcesFromObs!).toEqual([{...mockSource2, id: mockSource2Id}, {...mockSource1, id: mockSource1Id}]);
   });
 
 

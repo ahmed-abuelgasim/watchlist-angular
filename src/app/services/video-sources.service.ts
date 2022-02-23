@@ -1,37 +1,8 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
+import { VideoSource, NewVideoSource } from '../utils/video-source-utils';
 import { db } from '../../db/db';
-
-export interface NewVideoSource {
-  image?: string,
-  name: string,
-};
-
-export interface VideoSource extends NewVideoSource {
-  id?: number,
-  active: boolean,
-};
-
-
-export const initialVideoSources: VideoSource[] = [
-  {
-    active: false,
-    name: 'Disney plus',
-  },
-  {
-    active: false,
-    name: 'Apple TV+',
-  },
-  {
-    active: false,
-    name: 'Netflix',
-  },
-  {
-    active: false,
-    name: 'Amazon prime',
-  },
-];
 
 
 @Injectable({
@@ -68,7 +39,7 @@ export class VideoSourcesService {
 
 
   private async _emitNewValuesToObservables() {
-    const updatedSources = await db.videoSources.orderBy('name').toArray();
+    const updatedSources = await db.videoSources.toArray();
     this._sourcesBehaviourSubject.next(updatedSources);
 
     const updatedActiveSources = updatedSources.filter(source => source.active == true);
