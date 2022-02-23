@@ -1,5 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { VideoSourcesService } from '../services/video-sources.service';
+import { NewVideoSource, sortByName, VideoSource } from '../utils/video-source-utils';
 
 
 @Component({
@@ -7,7 +9,7 @@ import { VideoSourcesService } from '../services/video-sources.service';
   templateUrl: './video-sources-settings.component.html',
   styleUrls: ['./video-sources-settings.component.scss'],
 })
-export class VideoSourcesSettingsComponent {
+export class VideoSourcesSettingsComponent implements OnInit, OnDestroy {
   static ERROR_MSGS = {
     // ADD: 'There was an error adding the video source. Please try again.',
     // DELETE: 'There was an error deleteing the video source. Please try again.',
@@ -15,8 +17,11 @@ export class VideoSourcesSettingsComponent {
     UPDATE_FAILED: 'There was an error updating. Please try again.',
   };
 
+  subscription!: Subscription;
   newActiveStates: {[k: string]: boolean} = {};
   submittingActiveSources = false;
+  toastMsg = '';
+  sources: VideoSource[] = [];
 
 
   constructor(public videoSourcesService: VideoSourcesService) { }
@@ -24,6 +29,24 @@ export class VideoSourcesSettingsComponent {
 
   get showSourcesSaveBtn(): boolean {
     return this.submittingActiveSources || Object.keys(this.newActiveStates).length > 0;
+  }
+
+  // get sortedSources(): VideoSource[] {
+  //   this.sources
+  //   return
+  // }
+
+
+  ngOnInit() {
+    this.subscription = this.videoSourcesService.sources$
+      .subscribe((sources) => {
+        this.sources = sources;
+      });
+  }
+
+
+  ngOnDestroy() {
+    this.subscription.unsubscribe();
   }
 
 
@@ -48,11 +71,16 @@ export class VideoSourcesSettingsComponent {
         this.videoSourcesService.changeSourceActiveState(parseInt(id, 10), newActiveState)
       );
     }
-    await Promise.all(promises);
+    await Promise.all(promises).catch((error) => {
+      console.error(error);
+      this.toastMsg = VideoSourcesSettingsComponent.ERROR_MSGS.UPDATE_FAILED;
+      alert(this.toastMsg);
+    });
 
     this.newActiveStates = {};
     this.submittingActiveSources = false;
   }
+
 
 
 
@@ -62,16 +90,16 @@ export class VideoSourcesSettingsComponent {
   //   try {
   //     this.id = await this.videoSourcesService.addCustomSource(source);
   //   } catch (error) {
-  //     const toastMessage = (error as Error).name == VideoSourcesService.sourceExistsErrorType ?
-  //       VideoSourcesSettingsComponent.ERROR_MSGS.EXISTING :
-  //       VideoSourcesSettingsComponent.ERROR_MSGS.ADD;
-  //     alert(toastMessage);
+  //     // const toastMessage = (error as Error).name == VideoSourcesService.sourceExistsErrorType ?
+  //     //   VideoSourcesSettingsComponent.ERROR_MSGS.EXISTING :
+  //     //   VideoSourcesSettingsComponent.ERROR_MSGS.ADD;
+  //     // alert(toastMessage);
   //   }
   // }
 
-  // async deleteSource(id: number) {
+  // async deleteSource() {
   //   try {
-  //     await this.videoSourcesService.removeCustomSource(id);
+  //     await this.videoSourcesService.removeCustomSource(this.id);
   //   } catch (error) {
   //     alert(VideoSourcesSettingsComponent.ERROR_MSGS.DELETE);
   //   }

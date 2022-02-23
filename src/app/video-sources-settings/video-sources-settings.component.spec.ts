@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { VideoSourcesSettingsComponent } from './video-sources-settings.component';
 
 
-fdescribe('VideoSourcesSettingsComponent', () => {
+describe('VideoSourcesSettingsComponent', () => {
   let component: VideoSourcesSettingsComponent;
   let fixture: ComponentFixture<VideoSourcesSettingsComponent>;
 

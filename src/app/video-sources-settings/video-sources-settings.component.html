@@ -8,7 +8,7 @@
           [id]="source.id"
           [checked]="source.active"
           (change)="checkboxChanged($event)"/>
-        {{source.name}}
+        {{source.name}} - {{source.active}}
       </label>
     </li>
   </ul>
@@ -19,5 +19,7 @@
 </form>
 
 
-<!-- <button (click)="addSource()">Add</button>
-<button (click)="deleteSource()">Delete</button> -->
+<button (click)="addSource()">Add</button>
+<button (click)="deleteSource()">Delete</button>
+<!--
+-->
