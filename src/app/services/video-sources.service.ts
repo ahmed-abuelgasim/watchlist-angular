@@ -11,11 +11,11 @@ import { db } from '../../db/db';
 export class VideoSourcesService {
   static sourceExistsErrorType = 'ConstraintError';
 
-  private _sourcesBehaviourSubject = new BehaviorSubject<VideoSource[]>([]);
-  readonly sources$ = this._sourcesBehaviourSubject.asObservable();
-
   private _activeSourcesBehaviourSubject = new BehaviorSubject<VideoSource[]>([]);
   readonly activeSources$ = this._activeSourcesBehaviourSubject.asObservable();
+
+  private _sourcesBehaviourSubject = new BehaviorSubject<VideoSource[]>([]);
+  readonly sources$ = this._sourcesBehaviourSubject.asObservable();
 
 
   constructor() {
@@ -24,8 +24,9 @@ export class VideoSourcesService {
 
 
   async addCustomSource(videoSource: NewVideoSource): Promise<number> {
-    const id = await db.videoSources.add({...videoSource, active: true});
-    await this._emitNewValuesToObservables();
+    const sources = await db.videoSources.toArray();
+    const id = await db.videoSources.add({...videoSource, active: true, order: sources.length});
+    await this._emitLatestValuesToObservables();
     return id;
   }
 
@@ -33,27 +34,31 @@ export class VideoSourcesService {
   async changeSourceActiveState(id: number, newActiveState: boolean): Promise<void> {
     const updated = await db.videoSources.update(id, {active: newActiveState});
     if (updated) {
-      await this._emitNewValuesToObservables();
+      await this._emitLatestValuesToObservables();
     }
   }
 
 
-  private async _emitNewValuesToObservables() {
+  private async _emitLatestValuesToObservables() {
     const updatedSources = await db.videoSources.toArray();
     this._sourcesBehaviourSubject.next(updatedSources);
-
     const updatedActiveSources = updatedSources.filter(source => source.active == true);
     this._activeSourcesBehaviourSubject.next(updatedActiveSources);
   }
 
 
   private async _init() {
-    await this._emitNewValuesToObservables();
+    await this._emitLatestValuesToObservables();
   }
 
 
   async removeCustomSource(id: number): Promise<void> {
     await db.videoSources.delete(id);
-    await this._emitNewValuesToObservables();
+
+    // Reorder sources
+    const updatedSources = await db.videoSources.orderBy('order').toArray();
+    const reorderedSources = updatedSources.map((source, i) => {return {...source, order: i}});
+    await db.videoSources.bulkPut(reorderedSources);
+    await this._emitLatestValuesToObservables();
   }
 }

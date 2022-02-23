@@ -11,10 +11,10 @@ export class AppDB extends Dexie {
 
     const sortedVideoSources: VideoSource[] = initialVideoSources
       .sort(sortByName)
-      .map((source, i) => {return {...source, order: i}});
+      .map((source, i) => {return {...source, active: true, order: i}});
 
     this.version(1).stores({
-      videoSources: '++id, &name',
+      videoSources: '++id, &name, &order',
     });
 
     this.on('populate', () => db.videoSources.bulkAdd(sortedVideoSources));
