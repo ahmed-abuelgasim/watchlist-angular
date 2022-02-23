@@ -18,7 +18,7 @@ export class VideoSourcesSettingsComponent implements OnInit, OnDestroy {
   };
 
   subscription!: Subscription;
-  newActiveStates: {[k: string]: boolean} = {};
+  newActiveStates: {[k: string]: {id: number, newActiveState: boolean}} = {};
   submittingActiveSources = false;
   toastMsg = '';
   sources: VideoSource[] = [];
@@ -30,11 +30,6 @@ export class VideoSourcesSettingsComponent implements OnInit, OnDestroy {
   get showSourcesSaveBtn(): boolean {
     return this.submittingActiveSources || Object.keys(this.newActiveStates).length > 0;
   }
-
-  // get sortedSources(): VideoSource[] {
-  //   this.sources
-  //   return
-  // }
 
 
   ngOnInit() {
@@ -57,31 +52,26 @@ export class VideoSourcesSettingsComponent implements OnInit, OnDestroy {
     if (videoSourceId in this.newActiveStates) {
       delete this.newActiveStates[videoSourceId];
     } else {
-      this.newActiveStates[videoSourceId] = newActiveState;
+      this.newActiveStates[videoSourceId] = {id: parseInt(videoSourceId, 10), newActiveState};
     }
+    console.log(this.newActiveStates);
   }
 
   async updateActiveSources(event: SubmitEvent) {
     event.preventDefault();
     this.submittingActiveSources = true;
 
-    const promises: Promise<void>[] = [];
-    for (const [id, newActiveState] of Object.entries(this.newActiveStates)) {
-      promises.push(
-        this.videoSourcesService.changeSourceActiveState(parseInt(id, 10), newActiveState)
-      );
-    }
-    await Promise.all(promises).catch((error) => {
-      console.error(error);
-      this.toastMsg = VideoSourcesSettingsComponent.ERROR_MSGS.UPDATE_FAILED;
-      alert(this.toastMsg);
-    });
-
-    this.newActiveStates = {};
-    this.submittingActiveSources = false;
+    const updatedSources = Object.values(this.newActiveStates);
+    await this.videoSourcesService.changeSourceActiveState(updatedSources)
+      .catch((error) => {
+        console.error(error);
+        this.toastMsg = VideoSourcesSettingsComponent.ERROR_MSGS.UPDATE_FAILED;
+        alert(this.toastMsg);
+      }).finally(() => {
+        this.newActiveStates = {};
+        this.submittingActiveSources = false;
+      });
   }
-
-
 
 
   // id: number = 0;
