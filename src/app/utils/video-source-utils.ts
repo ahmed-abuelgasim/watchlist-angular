@@ -1,36 +1,27 @@
 export interface NewVideoSource {
   image?: string,
   name: string,
-  order?: number,
 };
 
 
 export interface VideoSource extends NewVideoSource {
   id?: number,
   active: boolean,
+  order: number,
 };
 
 
-export const sortByName = (a: VideoSource, b: VideoSource) => {
+export const sortByName = (a: NewVideoSource | VideoSource, b: NewVideoSource | VideoSource) => {
   return new Intl.Collator().compare(a.name, b.name)
 };
 
 
-export const initialVideoSources: VideoSource[] = [
-  {
-    active: false,
-    name: 'Disney plus',
-  },
-  {
-    active: false,
-    name: 'Apple TV+',
-  },
-  {
-    active: false,
-    name: 'Netflix',
-  },
-  {
-    active: false,
-    name: 'Amazon prime',
-  },
+export const sortByOrder = (a: VideoSource, b: VideoSource) => a.order - b.order;
+
+
+export const initialVideoSources: NewVideoSource[] = [
+  {name: 'Disney plus'},
+  {name: 'Apple TV+'},
+  {name: 'Netflix'},
+  {name: 'Amazon prime'},
 ];
