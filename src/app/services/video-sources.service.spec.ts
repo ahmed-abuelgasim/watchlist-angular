@@ -96,24 +96,37 @@ describe('VideoSourcesService', () => {
 
 
   it('should change active state of sources correctly', async () => {
-    const randomMockSourceForDb = {...randomMockSource, active: true, order: 0}
     let activeSourcesFromObs: VideoSource[];
-    let sourcesFromObs: VideoSource[];
     service.activeSources$.subscribe(activeSources => activeSourcesFromObs = activeSources);
-    service.sources$.subscribe(sources => sourcesFromObs = sources);
+    const ids = await db.videoSources.bulkAdd(
+      [
+        {...mockSource1, active: false, order: 0},
+        {...mockSource2, active: false, order: 1},
+      ],
+      {allKeys: true}
+    );
 
-    const id = await db.videoSources.add(randomMockSourceForDb);
     // Test that updating to existing value doesn't throw error
-    await service.changeSourceActiveState(id, true);
-    await service.changeSourceActiveState(id, false);
-    let mockSourcefromDb = await db.videoSources.get(id);
-    expect(mockSourcefromDb?.active).toBeFalse();
-    expect(activeSourcesFromObs!).toEqual([]);
+    await service.changeSourceActiveState([{id: ids[0], newActiveState: false}]);
+    // Test updating single value
+    await service.changeSourceActiveState([{id: ids[0], newActiveState: true}]);
+    let mockSource1fromDb = await db.videoSources.get(ids[0]);
 
-    await service.changeSourceActiveState(id, true);
-    mockSourcefromDb = await db.videoSources.get(id);
-    expect(mockSourcefromDb?.active).toBeTrue();
-    expect(activeSourcesFromObs!).toEqual([{...randomMockSourceForDb, id}]);
+    expect(mockSource1fromDb?.active).toBeTrue();
+    expect(activeSourcesFromObs!).toEqual([mockSource1fromDb!]);
+
+
+    // Test updating multiple values
+    await service.changeSourceActiveState([
+      {id: ids[0], newActiveState: false},
+      {id: ids[1], newActiveState: true},
+    ]);
+    mockSource1fromDb = await db.videoSources.get(ids[0]);
+    const mockSource2fromDb = await db.videoSources.get(ids[1]);
+
+    expect(mockSource1fromDb?.active).toBeFalse();
+    expect(mockSource2fromDb?.active).toBeTrue();
+    expect(activeSourcesFromObs!).toEqual([mockSource2fromDb!]);
   });
 
 
