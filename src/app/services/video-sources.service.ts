@@ -31,11 +31,16 @@ export class VideoSourcesService {
   }
 
 
-  async changeSourceActiveState(id: number, newActiveState: boolean): Promise<void> {
-    const updated = await db.videoSources.update(id, {active: newActiveState});
-    if (updated) {
-      await this._emitLatestValuesToObservables();
-    }
+  async changeSourceActiveState(sourcesToUpdate: {id: number, newActiveState: boolean}[]): Promise<void> {
+    const sources = await db.videoSources.toArray();
+
+    const updatedSources = sourcesToUpdate.map((sourceToUpdate) => {
+      const sourceMatch = sources.find(source => source.id == sourceToUpdate.id);
+      return {...sourceMatch, active: sourceToUpdate.newActiveState} as VideoSource;
+    });
+
+    await db.videoSources.bulkPut(updatedSources);
+    await this._emitLatestValuesToObservables();
   }
 
 
