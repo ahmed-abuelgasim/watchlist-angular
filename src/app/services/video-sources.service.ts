@@ -18,7 +18,6 @@ export class VideoSourcesService {
   readonly sources$ = this._sourcesBehaviourSubject.asObservable();
 
 
-
   constructor() {
     this._initialised = new Promise(async (resolve) => {
       await this._emitLatestValuesToObservables();
@@ -47,19 +46,13 @@ export class VideoSourcesService {
   }
 
 
-  async changeSourceActiveState(sourcesToUpdate: {id: number, newActiveState: boolean}[]): Promise<void> {
-    await this._initialised;
-    const updatedSources = sourcesToUpdate.map((sourceToUpdate): VideoSource => {
-      const sourceMatch = this._sourcesBehaviourSubject
-        .getValue()
-        .find(source => source.id == sourceToUpdate.id);
-      return {...sourceMatch!, active: sourceToUpdate.newActiveState};
-    });
-
-    await db.videoSources.bulkPut(updatedSources);
-
+  async changeSourceActiveState(id: number, newActiveState: boolean): Promise<void> {
+    await Promise.all([
+      this._initialised,
+      db.videoSources.update(id, {active: newActiveState}),
+    ])
     // Emit updated sources to observables
-    await this._emitLatestValuesToObservables();
+    .finally(() => this._emitLatestValuesToObservables());
   }
 
 
@@ -86,6 +79,7 @@ export class VideoSourcesService {
       .map((source, i) => {return {...source, order: i}});
     await db.videoSources.bulkPut(reorderedSources)
       .catch(error => {throw(error)})
+      // Emit updated sources to observables
       .finally(() => this._emitLatestValuesToObservables());
   }
 }
