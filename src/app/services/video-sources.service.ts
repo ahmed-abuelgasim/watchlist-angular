@@ -71,22 +71,22 @@ export class VideoSourcesService {
   }
 
 
-  private async _init() {
-    await this._emitLatestValuesToObservables();
-  }
+  async removeCustomSources(ids: number[]): Promise<void> {
+    // Delete sources
+    await Promise.all([
+      this._initialised,
+      db.videoSources.bulkDelete(ids)
+    ]);
 
-
-  async removeCustomSource(id: number): Promise<void> {
-    await db.videoSources.delete(id);
-
+    // Reorder remaining sources
     const reorderedSources = this._sourcesBehaviourSubject
       .getValue()
-      .filter((source) => source.id != id)
+      .filter(source => !ids.includes(source.id!))
       .sort(sortByOrder)
       .map((source, i) => {return {...source, order: i}});
-
-    // Reorder sources
     await db.videoSources.bulkPut(reorderedSources);
+
+    // Emit updated sources to observables
     await this._emitLatestValuesToObservables();
   }
 }
