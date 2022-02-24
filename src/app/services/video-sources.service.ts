@@ -75,7 +75,7 @@ export class VideoSourcesService {
     // Delete source
     await Promise.all([
       this._initialised,
-      db.videoSources.delete(id)
+      db.videoSources.delete(id),
     ]);
 
     // Reorder remaining sources
@@ -84,9 +84,8 @@ export class VideoSourcesService {
       .filter(source => source.id != id)
       .sort(sortByOrder)
       .map((source, i) => {return {...source, order: i}});
-    await db.videoSources.bulkPut(reorderedSources);
-
-    // Emit updated sources to observables
-    await this._emitLatestValuesToObservables();
+    await db.videoSources.bulkPut(reorderedSources)
+      .catch(error => {throw(error)})
+      .finally(() => this._emitLatestValuesToObservables());
   }
 }
