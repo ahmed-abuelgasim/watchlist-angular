@@ -24,6 +24,7 @@ describe('VideoSourcesService', () => {
     const rand = Math.random();
     randomMockSource = rand < 0.3 ? mockSource1 : (rand < 0.6 ? mockSource2 : mockSource3);
     await db.videoSources.clear();
+    service = new VideoSourcesService();
   });
 
 
@@ -35,19 +36,21 @@ describe('VideoSourcesService', () => {
   });
 
 
-  it('should add sources to db and update observables', async () => {
+  it('should add sources to db with correct order and update observables', async () => {
     let activeSourcesFromObs: VideoSource[];
     let sourcesFromObs: VideoSource[];
-    service.sources$.subscribe((sources) => sourcesFromObs = sources);
     service.activeSources$.subscribe(activeSources => activeSourcesFromObs = activeSources);
+    service.sources$.subscribe(sources => sourcesFromObs = sources);
 
     const mockSource2Id = await service.addCustomSource(mockSource2);
     const mockSource1Id = await service.addCustomSource(mockSource1);
+    const mockSource3Id = await service.addCustomSource(mockSource3);
     const sourcesInDb = await db.videoSources.toArray();
     const expectedResult = [
-      {...mockSource2, id: mockSource2Id, active: true, order: 0},
+      {...mockSource2, id: mockSource2Id, active: true, order: 2},
       {...mockSource1, id: mockSource1Id, active: true, order: 1},
-    ];
+      {...mockSource3, id: mockSource3Id, active: true, order: 0},
+    ]
 
     expect(mockSource2Id).toBeInstanceOf(Number);
     expect(mockSource1Id).toBeInstanceOf(Number);
@@ -71,33 +74,32 @@ describe('VideoSourcesService', () => {
   it('should remove sources from db and update observables', async () => {
     let activeSourcesFromObs: VideoSource[];
     let sourcesFromObs: VideoSource[];
-    service.activeSources$.subscribe(activeSources => activeSourcesFromObs = activeSources);
-    service.sources$.subscribe((sources) => sourcesFromObs = sources);
-
+    const mockSource2ForBD = {...mockSource2, active: false, order: 1};
     const ids = await db.videoSources.bulkAdd(
       [
         {...mockSource1, active: true, order: 0},
-        {...mockSource2, active: true, order: 1},
-        {...mockSource3, active: true, order: 2},
+        mockSource2ForBD,
       ],
       {allKeys: true}
     );
+    service = new VideoSourcesService();
+    service.activeSources$.subscribe(activeSources => activeSourcesFromObs = activeSources);
+    service.sources$.subscribe(sources => sourcesFromObs = sources);
+
     await service.removeCustomSource(ids[0]);
     const sourcesInDb = await db.videoSources.toArray();
     const expectedResult = [
-      {...mockSource2, id: ids[1], active: true, order: 0},
-      {...mockSource3, id: ids[2], active: true, order: 1},
+      {...mockSource2ForBD, id: ids[1], order: 0},
     ]
 
     expect(sourcesInDb).toEqual(expectedResult);
     expect(sourcesFromObs!).toEqual(expectedResult);
-    expect(activeSourcesFromObs!).toEqual(expectedResult);
+    expect(activeSourcesFromObs!).toEqual([]);
   });
 
 
   it('should change active state of sources correctly', async () => {
     let activeSourcesFromObs: VideoSource[];
-    service.activeSources$.subscribe(activeSources => activeSourcesFromObs = activeSources);
     const ids = await db.videoSources.bulkAdd(
       [
         {...mockSource1, active: false, order: 0},
@@ -105,28 +107,22 @@ describe('VideoSourcesService', () => {
       ],
       {allKeys: true}
     );
+    service = new VideoSourcesService();
+    service.activeSources$.subscribe(activeSources => activeSourcesFromObs = activeSources);
 
     // Test that updating to existing value doesn't throw error
-    await service.changeSourceActiveState([{id: ids[0], newActiveState: false}]);
-    // Test updating single value
-    await service.changeSourceActiveState([{id: ids[0], newActiveState: true}]);
+    await service.changeSourceActiveState(ids[0], false);
+    await service.changeSourceActiveState(ids[0], true);
     let mockSource1fromDb = await db.videoSources.get(ids[0]);
 
     expect(mockSource1fromDb?.active).toBeTrue();
     expect(activeSourcesFromObs!).toEqual([mockSource1fromDb!]);
 
 
-    // Test updating multiple values
-    await service.changeSourceActiveState([
-      {id: ids[0], newActiveState: false},
-      {id: ids[1], newActiveState: true},
-    ]);
-    mockSource1fromDb = await db.videoSources.get(ids[0]);
-    const mockSource2fromDb = await db.videoSources.get(ids[1]);
-
-    expect(mockSource1fromDb?.active).toBeFalse();
+    await service.changeSourceActiveState(ids[1], true);
+    let mockSource2fromDb = await db.videoSources.get(ids[1]);
     expect(mockSource2fromDb?.active).toBeTrue();
-    expect(activeSourcesFromObs!).toEqual([mockSource2fromDb!]);
+    expect(activeSourcesFromObs!).toEqual([mockSource1fromDb!, mockSource2fromDb!]);
   });
 
 
