@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
-import { VideoSource, NewVideoSource } from '../utils/video-source-utils';
+import { VideoSource, NewVideoSource, sortByOrder } from '../utils/video-source-utils';
 import { db } from '../../db/db';
 
 
@@ -23,9 +23,18 @@ export class VideoSourcesService {
   }
 
 
+  // Adds a new video source with an order of 0 so that it appears at the top of custom ordered lists
   async addCustomSource(videoSource: NewVideoSource): Promise<number> {
-    const sources = await db.videoSources.toArray();
-    const id = await db.videoSources.add({...videoSource, active: true, order: sources.length});
+    // Reorder existing sources by adding incrementing order values by 1
+    const reorderedSources = this._sourcesBehaviourSubject
+      .getValue()
+      .sort(sortByOrder)
+      .map((source, i) => {return {...source, order: i + 1 }})
+      .reverse();
+    await db.videoSources.bulkPut(reorderedSources);
+
+    // Add new value with order of 0
+    const id = await db.videoSources.add({...videoSource, active: true, order: 0});
     await this._emitLatestValuesToObservables();
     return id;
   }
