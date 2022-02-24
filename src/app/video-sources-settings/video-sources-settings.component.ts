@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { VideoSourcesService } from '../services/video-sources.service';
-import { NewVideoSource, sortByName, VideoSource } from '../utils/video-source-utils';
+import { VideoSource } from '../utils/video-source-utils';
 
 
 @Component({
@@ -57,21 +57,21 @@ export class VideoSourcesSettingsComponent implements OnInit, OnDestroy {
     console.log(this.newActiveStates);
   }
 
-  async updateActiveSources(event: SubmitEvent) {
-    event.preventDefault();
-    this.submittingActiveSources = true;
+  // async updateActiveSources(event: SubmitEvent) {
+  //   event.preventDefault();
+  //   this.submittingActiveSources = true;
 
-    const updatedSources = Object.values(this.newActiveStates);
-    await this.videoSourcesService.changeSourceActiveState(updatedSources)
-      .catch((error) => {
-        console.error(error);
-        this.toastMsg = VideoSourcesSettingsComponent.ERROR_MSGS.UPDATE_FAILED;
-        alert(this.toastMsg);
-      }).finally(() => {
-        this.newActiveStates = {};
-        this.submittingActiveSources = false;
-      });
-  }
+  //   const updatedSources = Object.values(this.newActiveStates);
+  //   await this.videoSourcesService.changeSourceActiveState(updatedSources)
+  //     .catch((error) => {
+  //       console.error(error);
+  //       this.toastMsg = VideoSourcesSettingsComponent.ERROR_MSGS.UPDATE_FAILED;
+  //       alert(this.toastMsg);
+  //     }).finally(() => {
+  //       this.newActiveStates = {};
+  //       this.submittingActiveSources = false;
+  //     });
+  // }
 
 
   // id: number = 0;

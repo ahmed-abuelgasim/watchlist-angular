@@ -1,4 +1,4 @@
-<form (submit)="updateActiveSources($event)">
+<!-- <form (submit)="updateActiveSources($event)"> -->
   <ul>
     <li *ngFor="let source of (videoSourcesService.sources$ | async)">
       <label>
@@ -13,10 +13,11 @@
     </li>
   </ul>
 
+<!--
   <button [disabled]="!showSourcesSaveBtn" aria-label="Save active sources" type="submit">
     Save
   </button>
-</form>
+  </form> -->
 
 
 <!--
