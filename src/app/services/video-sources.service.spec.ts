@@ -74,8 +74,6 @@ describe('VideoSourcesService', () => {
   it('should remove sources from db and update observables', async () => {
     let activeSourcesFromObs: VideoSource[];
     let sourcesFromObs: VideoSource[];
-    service.activeSources$.subscribe(activeSources => activeSourcesFromObs = activeSources);
-    service.sources$.subscribe(sources => sourcesFromObs = sources);
 
     const ids = await db.videoSources.bulkAdd(
       [
@@ -85,6 +83,9 @@ describe('VideoSourcesService', () => {
       ],
       {allKeys: true}
     );
+    service = new VideoSourcesService();
+    service.activeSources$.subscribe(activeSources => activeSourcesFromObs = activeSources);
+    service.sources$.subscribe(sources => sourcesFromObs = sources);
     await service.removeCustomSource(ids[0]);
     const sourcesInDb = await db.videoSources.toArray();
     const expectedResult = [
@@ -100,7 +101,6 @@ describe('VideoSourcesService', () => {
 
   it('should change active state of sources correctly', async () => {
     let activeSourcesFromObs: VideoSource[];
-    service.activeSources$.subscribe(activeSources => activeSourcesFromObs = activeSources);
     const ids = await db.videoSources.bulkAdd(
       [
         {...mockSource1, active: false, order: 0},
@@ -108,6 +108,8 @@ describe('VideoSourcesService', () => {
       ],
       {allKeys: true}
     );
+    service = new VideoSourcesService();
+    service.activeSources$.subscribe(activeSources => activeSourcesFromObs = activeSources);
 
     // Test that updating to existing value doesn't throw error
     await service.changeSourceActiveState([{id: ids[0], newActiveState: false}]);
@@ -115,9 +117,9 @@ describe('VideoSourcesService', () => {
     await service.changeSourceActiveState([{id: ids[0], newActiveState: true}]);
     let mockSource1fromDb = await db.videoSources.get(ids[0]);
 
+
     expect(mockSource1fromDb?.active).toBeTrue();
     expect(activeSourcesFromObs!).toEqual([mockSource1fromDb!]);
-
 
     // Test updating multiple values
     await service.changeSourceActiveState([

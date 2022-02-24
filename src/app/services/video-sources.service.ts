@@ -41,11 +41,11 @@ export class VideoSourcesService {
 
 
   async changeSourceActiveState(sourcesToUpdate: {id: number, newActiveState: boolean}[]): Promise<void> {
-    const sources = await db.videoSources.toArray();
-
-    const updatedSources = sourcesToUpdate.map((sourceToUpdate) => {
-      const sourceMatch = sources.find(source => source.id == sourceToUpdate.id);
-      return {...sourceMatch, active: sourceToUpdate.newActiveState} as VideoSource;
+    const updatedSources = sourcesToUpdate.map((sourceToUpdate): VideoSource => {
+      const sourceMatch = this._sourcesBehaviourSubject
+        .getValue()
+        .find(source => source.id == sourceToUpdate.id);
+      return {...sourceMatch!, active: sourceToUpdate.newActiveState};
     });
 
     await db.videoSources.bulkPut(updatedSources);
@@ -55,8 +55,8 @@ export class VideoSourcesService {
 
   private async _emitLatestValuesToObservables() {
     const updatedSources = await db.videoSources.toArray();
-    this._sourcesBehaviourSubject.next(updatedSources);
     const updatedActiveSources = updatedSources.filter(source => source.active == true);
+    this._sourcesBehaviourSubject.next(updatedSources);
     this._activeSourcesBehaviourSubject.next(updatedActiveSources);
   }
 
@@ -69,9 +69,13 @@ export class VideoSourcesService {
   async removeCustomSource(id: number): Promise<void> {
     await db.videoSources.delete(id);
 
+    const reorderedSources = this._sourcesBehaviourSubject
+      .getValue()
+      .filter((source) => source.id != id)
+      .sort(sortByOrder)
+      .map((source, i) => {return {...source, order: i}});
+
     // Reorder sources
-    const updatedSources = await db.videoSources.orderBy('order').toArray();
-    const reorderedSources = updatedSources.map((source, i) => {return {...source, order: i}});
     await db.videoSources.bulkPut(reorderedSources);
     await this._emitLatestValuesToObservables();
   }
