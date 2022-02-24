@@ -13,19 +13,24 @@ export class VideoSourcesService {
 
   private _activeSourcesBehaviourSubject = new BehaviorSubject<VideoSource[]>([]);
   readonly activeSources$ = this._activeSourcesBehaviourSubject.asObservable();
-
+  private _initialised: Promise<void>;
   private _sourcesBehaviourSubject = new BehaviorSubject<VideoSource[]>([]);
   readonly sources$ = this._sourcesBehaviourSubject.asObservable();
 
 
+
   constructor() {
-    this._init();
+    this._initialised = new Promise(async (resolve) => {
+      await this._emitLatestValuesToObservables();
+      resolve();
+    });
   }
 
 
   // Adds a new video source with an order of 0 so that it appears at the top of custom ordered lists
   async addCustomSource(videoSource: NewVideoSource): Promise<number> {
     // Reorder existing sources by adding incrementing order values by 1
+    await this._initialised;
     const reorderedSources = this._sourcesBehaviourSubject
       .getValue()
       .sort(sortByOrder)
@@ -35,12 +40,15 @@ export class VideoSourcesService {
 
     // Add new value with order of 0
     const id = await db.videoSources.add({...videoSource, active: true, order: 0});
+
+    // Emit updated sources to observables
     await this._emitLatestValuesToObservables();
     return id;
   }
 
 
   async changeSourceActiveState(sourcesToUpdate: {id: number, newActiveState: boolean}[]): Promise<void> {
+    await this._initialised;
     const updatedSources = sourcesToUpdate.map((sourceToUpdate): VideoSource => {
       const sourceMatch = this._sourcesBehaviourSubject
         .getValue()
@@ -49,6 +57,8 @@ export class VideoSourcesService {
     });
 
     await db.videoSources.bulkPut(updatedSources);
+
+    // Emit updated sources to observables
     await this._emitLatestValuesToObservables();
   }
 
