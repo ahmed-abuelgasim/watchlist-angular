@@ -71,17 +71,17 @@ export class VideoSourcesService {
   }
 
 
-  async removeCustomSources(ids: number[]): Promise<void> {
-    // Delete sources
+  async removeCustomSource(id: number): Promise<void> {
+    // Delete source
     await Promise.all([
       this._initialised,
-      db.videoSources.bulkDelete(ids)
+      db.videoSources.delete(id)
     ]);
 
     // Reorder remaining sources
     const reorderedSources = this._sourcesBehaviourSubject
       .getValue()
-      .filter(source => !ids.includes(source.id!))
+      .filter(source => source.id != id)
       .sort(sortByOrder)
       .map((source, i) => {return {...source, order: i}});
     await db.videoSources.bulkPut(reorderedSources);

@@ -79,7 +79,6 @@ describe('VideoSourcesService', () => {
       [
         {...mockSource1, active: true, order: 0},
         mockSource2ForBD,
-        {...mockSource3, active: true, order: 2},
       ],
       {allKeys: true}
     );
@@ -87,7 +86,7 @@ describe('VideoSourcesService', () => {
     service.activeSources$.subscribe(activeSources => activeSourcesFromObs = activeSources);
     service.sources$.subscribe(sources => sourcesFromObs = sources);
 
-    await service.removeCustomSources([ids[2], ids[0]]);
+    await service.removeCustomSource(ids[0]);
     const sourcesInDb = await db.videoSources.toArray();
     const expectedResult = [
       {...mockSource2ForBD, id: ids[1], order: 0},
