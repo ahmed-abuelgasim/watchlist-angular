@@ -93,8 +93,8 @@ describe('VideoSourcesService', () => {
     ]
 
     expect(sourcesInDb).toEqual(expectedResult);
-    // expect(sourcesFromObs!).toEqual(expectedResult);
-    // expect(activeSourcesFromObs!).toEqual(expectedResult);
+    expect(sourcesFromObs!).toEqual(expectedResult);
+    expect(activeSourcesFromObs!).toEqual(expectedResult);
   });
 
 
