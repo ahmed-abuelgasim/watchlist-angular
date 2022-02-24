@@ -126,6 +126,35 @@ describe('VideoSourcesService', () => {
   });
 
 
+  it('should reorder sources correctly', async () => {
+    let sourcesFromObs: VideoSource[];
+    const ids = await db.videoSources.bulkAdd(
+      [
+        {...mockSource1, active: false, order: 0},
+        {...mockSource2, active: false, order: 1},
+        {...mockSource3, active: false, order: 2},
+      ],
+      {allKeys: true}
+    );
+    service = new VideoSourcesService();
+    service.sources$.subscribe(sources => sourcesFromObs = sources);
+
+    await service.reorderSources([
+      {id: ids[0], order: 1},
+      {id: ids[1], order: 2},
+      {id: ids[2], order: 0},
+    ]);
+    const sourcesInDb = await db.videoSources.toArray();
+    const expectedResult = [
+      {...mockSource1, id: ids[0], active: false, order: 1},
+      {...mockSource2, id: ids[1], active: false, order: 2},
+      {...mockSource3, id: ids[2], active: false, order: 0}
+    ];
+    expect(sourcesInDb).toEqual(expectedResult);
+    expect(sourcesFromObs!).toEqual(expectedResult);
+  });
+
+
   afterAll(() => {
     Dexie.delete(dbName);
   });

@@ -33,8 +33,7 @@ export class VideoSourcesService {
     const reorderedSources = this._sourcesBehaviourSubject
       .getValue()
       .sort(sortByOrder)
-      .map((source, i) => {return {...source, order: i + 1 }})
-      .reverse();
+      .map((source, i) => ({...source, order: i + 1 }))
     await db.videoSources.bulkPut(reorderedSources);
 
     // Add new value with order of 0
@@ -51,7 +50,6 @@ export class VideoSourcesService {
       this._initialised,
       db.videoSources.update(id, {active: newActiveState}),
     ])
-    // Emit updated sources to observables
     .finally(() => this._emitLatestValuesToObservables());
   }
 
@@ -66,20 +64,33 @@ export class VideoSourcesService {
 
   async removeCustomSource(id: number): Promise<void> {
     // Delete source
-    await Promise.all([
-      this._initialised,
-      db.videoSources.delete(id),
-    ]);
+    const deletePromise = db.videoSources.delete(id);
 
     // Reorder remaining sources
+    await this._initialised
     const reorderedSources = this._sourcesBehaviourSubject
       .getValue()
       .filter(source => source.id != id)
       .sort(sortByOrder)
-      .map((source, i) => {return {...source, order: i}});
+      .map((source, i) => ({...source, order: i}));
+    await deletePromise;
     await db.videoSources.bulkPut(reorderedSources)
-      .catch(error => {throw(error)})
-      // Emit updated sources to observables
+      .finally(() => this._emitLatestValuesToObservables());
+  }
+
+
+  async reorderSources(newOrders: {id: number, order: number}[]): Promise<void> {
+    const initialisedPromise = this._initialised;
+    const newOrdersDict = Object.assign(
+      {},
+      ...newOrders.map(newOrder => ({[newOrder.id]: newOrder}))
+    );
+
+    await initialisedPromise;
+    const reorderedSources = this._sourcesBehaviourSubject
+      .getValue()
+      .map(source => ({...source, order: newOrdersDict[source.id!].order}));
+    await db.videoSources.bulkPut(reorderedSources)
       .finally(() => this._emitLatestValuesToObservables());
   }
 }

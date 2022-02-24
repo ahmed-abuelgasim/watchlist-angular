@@ -14,7 +14,7 @@ export class AppDB extends Dexie {
       .map((source, i) => {return {...source, active: true, order: i}});
 
     this.version(1).stores({
-      videoSources: '++id, &name, &order',
+      videoSources: '++id, &name, order',
     });
 
     this.on('populate', () => db.videoSources.bulkAdd(sortedVideoSources));
