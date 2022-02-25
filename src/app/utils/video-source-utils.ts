@@ -7,6 +7,7 @@ export interface NewVideoSource {
 export interface VideoSource extends NewVideoSource {
   id?: number,
   active: boolean,
+  initial?: boolean,
   order: number,
 };
 
