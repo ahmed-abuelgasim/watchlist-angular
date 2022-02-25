@@ -62,7 +62,7 @@ export class VideoSourcesService {
   }
 
 
-  async removeCustomSource(id: number): Promise<void> {
+  async deleteCustomSource(id: number): Promise<void> {
     // Delete source
     const deletePromise = db.videoSources.delete(id);
 
