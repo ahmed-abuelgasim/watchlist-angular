@@ -1,26 +1,89 @@
-<!-- <form (submit)="updateActiveSources($event)"> -->
-  <ul>
-    <li *ngFor="let source of (videoSourcesService.sources$ | async)">
-      <label>
-        <input
-          aria-label="Active state of video source"
-          type="checkbox"
-          [id]="source.id"
-          [checked]="source.active"
-          (change)="checkboxChanged($event)"/>
-        {{source.name}} - {{source.active}}
-      </label>
-    </li>
-  </ul>
+<div>Choose your preferred video sources. Videos can be tagged with only selected sources.</div>
 
-<!--
-  <button [disabled]="!showSourcesSaveBtn" aria-label="Save active sources" type="submit">
-    Save
+<!-- Video sources -->
+<button
+    [attr.aria-label]="editMode ? 'Exit edit mode' : 'Enter edit mode'"
+    [attr.aria-pressed]="editMode"
+    (click)="editMode = !editMode">
+  Edit
+</button>
+
+<ul>
+  <li *ngFor="let source of (videoSourcesService.sources$ | async)">
+      <input
+        *ngIf="!editMode"
+        [id]="'source-' + source.id"
+        [attr.source-id]="source.id"
+        [checked]="source.active"
+        type="checkbox"
+        (change)="checkboxChanged($event)"/>
+
+    <label [for]="'source-' + source.id">
+      {{source.name}}
+    </label>
+
+    <button
+        *ngIf="!source.initial && editMode"
+        attr.aria-label="Delete {{source.name}}"
+        [attr.source-id]="source.id"
+        (click)="deleteSource($event)">
+      Delete
+    </button>
+  </li>
+</ul>
+
+<hr>
+
+<!-- Add new video source form -->
+<form
+    autocomplete="off"
+    [formGroup]="formData"
+    (ngSubmit)="addSource(formData.value)">
+  <div>Add custom video source</div>
+
+  <!-- Name -->
+  <div>
+    <label for="new-source-name">
+      Name<span aria-hidden="true">*</span>
+    </label>
+    <div>
+      <input
+          [attr.aria-invalid]="formNameInput?.invalid"
+          aria-describedby="new-source-name-error"
+          formControlName="name"
+          id="new-source-name"
+          required />
+    </div>
+    <div
+        *ngIf="formNameInput?.errors?.['maxlength'] && formNameInput?.dirty"
+        aria-live="polite"
+        id="new-source-name-error">
+      Maximum length 30 characters
+    </div>
+  </div>
+
+  <!-- Image -->
+  <div>
+    <label for="new-source-img">Choose a logo image</label>
+    <input
+        accept=".png,.svg"
+        id="new-source-img"
+        style="display: none"
+        type="file"
+        (change)="imageSelected($event)">
+  </div>
+
+  <div *ngIf="imageDataUrl">
+    <div>File: {{imageFileName}}</div>
+    <img
+        height="100px"
+        role="presentation"
+        src="{{imageDataUrl}}" />
+  </div>
+
+  <button
+      [disabled]="formData.invalid"
+      type="submit">
+    Add video source
   </button>
-  </form> -->
-
-
-<!--
-<button (click)="addSource()">Add</button>
-<button (click)="deleteSource()">Delete</button>
--->
+</form>

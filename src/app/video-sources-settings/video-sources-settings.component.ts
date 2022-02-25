@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { VideoSourcesService } from '../services/video-sources.service';
-import { VideoSource } from '../utils/video-source-utils';
+import { NewVideoSource } from '../utils/video-source-utils';
 
 
 @Component({
@@ -9,89 +9,112 @@ import { VideoSource } from '../utils/video-source-utils';
   templateUrl: './video-sources-settings.component.html',
   styleUrls: ['./video-sources-settings.component.scss'],
 })
-export class VideoSourcesSettingsComponent implements OnInit, OnDestroy {
+// export class VideoSourcesSettingsComponent implements OnInit, OnDestroy {
+export class VideoSourcesSettingsComponent {
   static ERROR_MSGS = {
-    // ADD: 'There was an error adding the video source. Please try again.',
-    // DELETE: 'There was an error deleteing the video source. Please try again.',
-    // EXISTING: 'Video source already exists',
-    UPDATE_FAILED: 'There was an error updating. Please try again.',
+    ADD: 'There was an error adding the video source. Please try again.',
+    DELETE: 'There was an error deleting the video source. Please try again.',
+    EXISTING: 'Video source with same name already exists',
+    ACTIVE_UPDATE: 'There was an error updating the video source. Please try again.',
   };
 
-  subscription!: Subscription;
-  newActiveStates: {[k: string]: {id: number, newActiveState: boolean}} = {};
-  submittingActiveSources = false;
+  formData: FormGroup;
+  imageDataUrl = '';
+  imageFileName = '';
+  private reader: FileReader;
   toastMsg = '';
-  sources: VideoSource[] = [];
+  editMode = false;
 
 
-  constructor(public videoSourcesService: VideoSourcesService) { }
+  constructor(
+    private fb: FormBuilder,
+    public videoSourcesService: VideoSourcesService
+  ) {
+    this.formData = this.fb.group({
+      name: ['', [
+        Validators.required,
+        Validators.maxLength(30),
+      ]]
+    });
 
-
-  get showSourcesSaveBtn(): boolean {
-    return this.submittingActiveSources || Object.keys(this.newActiveStates).length > 0;
+    // File reader needed to convert image to blob
+    this.reader = new FileReader();
+    this.reader.addEventListener('load', () => {
+      this.imageDataUrl = this.reader.result as string;
+    });
   }
 
 
-  ngOnInit() {
-    this.subscription = this.videoSourcesService.sources$
-      .subscribe((sources) => {
-        this.sources = sources;
-      });
+  get formNameInput() {
+    return this.formData.get('name');
   }
 
 
-  ngOnDestroy() {
-    this.subscription.unsubscribe();
+  imageSelected(event: Event) {
+    const inputEl = event.target as HTMLInputElement;
+    const files = inputEl.files;
+    if (!files || !files[0]) return;
+    const file = files[0];
+    console.log(file);
+    this.imageFileName = file.name;
+    this.reader.readAsDataURL(file);
   }
 
 
-  checkboxChanged(event: Event) {
-    const checkBoxEl = event.target as HTMLInputElement;
-    const videoSourceId = checkBoxEl.id;
-    const newActiveState = checkBoxEl.checked;
-    if (videoSourceId in this.newActiveStates) {
-      delete this.newActiveStates[videoSourceId];
-    } else {
-      this.newActiveStates[videoSourceId] = {id: parseInt(videoSourceId, 10), newActiveState};
+  addSource(data: any) {
+    const newVideoSource: NewVideoSource = {
+      name: data.name,
+      image: this.imageDataUrl,
     }
-    console.log(this.newActiveStates);
+
+    this.videoSourcesService.addCustomSource(newVideoSource)
+      .catch(error => {
+        const toastMsg = (error as Error).name == VideoSourcesService.sourceExistsErrorType ?
+          VideoSourcesSettingsComponent.ERROR_MSGS.EXISTING :
+          VideoSourcesSettingsComponent.ERROR_MSGS.ADD;
+        this.dealWithError(error, toastMsg);
+      });
+
+    this.imageFileName = '';
+    this.imageDataUrl = '';
+    this.formData.reset();
   }
 
-  // async updateActiveSources(event: SubmitEvent) {
-  //   event.preventDefault();
-  //   this.submittingActiveSources = true;
 
-  //   const updatedSources = Object.values(this.newActiveStates);
-  //   await this.videoSourcesService.changeSourceActiveState(updatedSources)
-  //     .catch((error) => {
-  //       console.error(error);
-  //       this.toastMsg = VideoSourcesSettingsComponent.ERROR_MSGS.UPDATE_FAILED;
-  //       alert(this.toastMsg);
-  //     }).finally(() => {
-  //       this.newActiveStates = {};
-  //       this.submittingActiveSources = false;
+  checkboxChanged(event: Event): void {
+    const checkBoxEl = event.target as HTMLInputElement;
+    if (checkBoxEl) {
+      const id = parseInt(checkBoxEl.getAttribute('source-id')!, 10);
+      this.videoSourcesService.changeSourceActiveState(id, checkBoxEl.checked)
+        .catch(error => this.dealWithError(error, VideoSourcesSettingsComponent.ERROR_MSGS.ACTIVE_UPDATE));
+    }
+  }
+
+
+  dealWithError(error: Error, toastMsg: string): void {
+    this.toastMsg = toastMsg;
+    alert(this.toastMsg);
+    console.error(error);
+  }
+
+
+  deleteSource(event: MouseEvent): void {
+    const buttonEl = event.target as HTMLButtonElement;
+    const id = parseInt(buttonEl.getAttribute('source-id')!, 10);
+    this.videoSourcesService.deleteCustomSource(id)
+      .catch(error => this.dealWithError(error, VideoSourcesSettingsComponent.ERROR_MSGS.DELETE));
+  }
+
+
+  // ngOnInit() {
+  //   this.subscription = this.videoSourcesService.activeSources$
+  //     .subscribe(sources => {
+  //       this.sourceIds = sources.map(source => source.id!)
   //     });
   // }
 
 
-  // id: number = 0;
-
-  // async addSource(source: NewVideoSource = {name: 'Kodi'}) {
-  //   try {
-  //     this.id = await this.videoSourcesService.addCustomSource(source);
-  //   } catch (error) {
-  //     // const toastMessage = (error as Error).name == VideoSourcesService.sourceExistsErrorType ?
-  //     //   VideoSourcesSettingsComponent.ERROR_MSGS.EXISTING :
-  //     //   VideoSourcesSettingsComponent.ERROR_MSGS.ADD;
-  //     // alert(toastMessage);
-  //   }
-  // }
-
-  // async deleteSource() {
-  //   try {
-  //     await this.videoSourcesService.removeCustomSource(this.id);
-  //   } catch (error) {
-  //     alert(VideoSourcesSettingsComponent.ERROR_MSGS.DELETE);
-  //   }
+  // ngOnDestroy() {
+  //   this.subscription.unsubscribe();
   // }
 }
