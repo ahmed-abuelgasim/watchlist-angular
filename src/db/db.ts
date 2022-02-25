@@ -9,14 +9,13 @@ export class AppDB extends Dexie {
   constructor() {
     super(dbName);
 
-    const sortedVideoSources: VideoSource[] = initialVideoSources
-      .sort(sortByName)
-      .map((source, i) => {return {...source, active: true, order: i}});
-
     this.version(1).stores({
       videoSources: '++id, &name, order',
     });
 
+    const sortedVideoSources: VideoSource[] = initialVideoSources
+      .sort(sortByName)
+      .map((source, i) => {return {...source, active: true, initial: true, order: i}});
     this.on('populate', () => db.videoSources.bulkAdd(sortedVideoSources));
   }
 }
